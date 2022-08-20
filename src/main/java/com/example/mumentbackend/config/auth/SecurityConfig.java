@@ -5,6 +5,7 @@ import com.example.mumentbackend.config.auth.jwt.JwtAuthenticationEntryPoint;
 import com.example.mumentbackend.config.auth.jwt.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -47,6 +48,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .headers()
                 .frameOptions()
                 .sameOrigin()
+                .and()
+                .cors() // CORS 에러 방지용
 
                 // 시큐리티는 기본적으로 세션을 사용
                 // 세션을 사용하지 않을거라 세션 설정을 Stateless 로 설정
@@ -57,6 +60,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // 접근 권한 설정부
                 .and()
                 .authorizeRequests()
+                .antMatchers(HttpMethod.OPTIONS).permitAll() // 열어두어야 CORS Preflight 막을 수 있음
+                .antMatchers("/auth/**").permitAll()
                 .anyRequest().permitAll()
 
                 // JwtFilter 를 addFilterBefore 로 등록했던 JwtSecurityConfig 클래스를 적용
