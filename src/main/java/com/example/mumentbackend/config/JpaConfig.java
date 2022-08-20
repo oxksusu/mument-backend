@@ -1,2 +1,8 @@
-package com.example.mumentbackend.config;public class JpaConfig {
-}
+package com.example.mumentbackend.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+
+@Configuration
+@EnableJpaAuditing
+public class JpaConfig {}
