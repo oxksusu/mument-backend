@@ -28,23 +28,34 @@ public class Account { // 예약어가 이미 존재하므로 users로 바꾸어
     @Column(nullable = false)
     private String email;
 
+    /* 회원가입 과정에서는 프로필 사진을 나중에 등록할 수 있게 nullable */
     @Column
     private String picture;
-
-    @Column
-    private String password;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Authority authority; // Authority 이 열거형이었으므로
 
+    @Enumerated(EnumType.STRING)
+    @Column
+    private SocialLoginType socialLoginType;
 
+//    @Builder
+//    public Account(String email, String nickname, String picture, String password, Authority authority) {
+//        this.email = email;
+//        this.nickname = nickname;
+//        this.picture = picture;
+//        this.password = password;
+//        this.authority = authority;
+//    }
+
+    // 소셜 로그인 종류에 따라 분리하여 처리하기 위해서 socialLoginType 컬럼 추가했음
     @Builder
-    public Account(String email, String nickname, String picture, String password, Authority authority) {
+    public Account(SocialLoginType socialLoginType, String email, String nickname, String picture, Authority authority) {
+        this.socialLoginType = socialLoginType;
         this.email = email;
         this.nickname = nickname;
         this.picture = picture;
-        this.password = password;
         this.authority = authority;
     }
 

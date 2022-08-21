@@ -1,8 +1,8 @@
 package com.example.mumentbackend.config.auth;
 
-import com.example.mumentbackend.config.auth.jwt.JwtAccessDeniedHandler;
-import com.example.mumentbackend.config.auth.jwt.JwtAuthenticationEntryPoint;
-import com.example.mumentbackend.config.auth.jwt.TokenProvider;
+//import com.example.mumentbackend.config.auth.jwt.JwtAccessDeniedHandler;
+//import com.example.mumentbackend.config.auth.jwt.JwtAuthenticationEntryPoint;
+//import com.example.mumentbackend.config.auth.jwt.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
@@ -17,14 +17,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    private final TokenProvider tokenProvider;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+//    private final TokenProvider tokenProvider;
+//    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+//    private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     // h2 database 테스트가 원활하도록 관련 API 들은 전부 무시
     @Override
@@ -38,13 +34,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         // CSRF 설정 Disable
         http.csrf().disable()
 
-                // exception handling 할 때 우리가 만든 클래스를 추가
-                .exceptionHandling()
-                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                .accessDeniedHandler(jwtAccessDeniedHandler)
+//                // exception handling 할 때 우리가 만든 클래스를 추가
+//                .exceptionHandling()
+//                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+//                .accessDeniedHandler(jwtAccessDeniedHandler)
 
                 // h2-console 을 위한 설정을 추가
-                .and()
+//                .and()
                 .headers()
                 .frameOptions()
                 .sameOrigin()
@@ -61,11 +57,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests()
                 .antMatchers(HttpMethod.OPTIONS).permitAll() // 열어두어야 CORS Preflight 막을 수 있음
-                .antMatchers("/auth/**").permitAll()
-                .anyRequest().permitAll()
+                .antMatchers("/api/**").permitAll()
+                .anyRequest().permitAll();
 
-                // JwtFilter 를 addFilterBefore 로 등록했던 JwtSecurityConfig 클래스를 적용
-                .and()
-                .apply(new JwtSecurityConfig(tokenProvider));
+//                // JwtFilter 를 addFilterBefore 로 등록했던 JwtSecurityConfig 클래스를 적용
+//                .and()
+//                .apply(new JwtSecurityConfig(tokenProvider));
     }
 }
