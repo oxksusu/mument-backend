@@ -40,14 +40,6 @@ public class Account { // 예약어가 이미 존재하므로 users로 바꾸어
     @Column
     private SocialLoginType socialLoginType;
 
-//    @Builder
-//    public Account(String email, String nickname, String picture, String password, Authority authority) {
-//        this.email = email;
-//        this.nickname = nickname;
-//        this.picture = picture;
-//        this.password = password;
-//        this.authority = authority;
-//    }
 
     // 소셜 로그인 종류에 따라 분리하여 처리하기 위해서 socialLoginType 컬럼 추가했음
     @Builder

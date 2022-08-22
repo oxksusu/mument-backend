@@ -6,6 +6,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+/main/java/com/example/mumentbackend/config/auth/jwt/JwtProperties.java
 
 ### STS ###
 .apt_generated

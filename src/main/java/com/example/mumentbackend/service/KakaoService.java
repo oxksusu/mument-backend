@@ -1,5 +1,8 @@
 package com.example.mumentbackend.service;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.example.mumentbackend.config.auth.jwt.JwtProperties;
 import com.example.mumentbackend.domain.Account;
 import com.example.mumentbackend.domain.Authority;
 import com.example.mumentbackend.domain.KakaoAccountInfo;
@@ -18,6 +21,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.UnsupportedEncodingException;
+import java.util.Date;
+import java.util.Optional;
 
 /*
 
@@ -73,8 +81,6 @@ public class KakaoService {
                 String.class
         );
 
-        System.out.println("만료되지 않은 토큰이었어...!"); //자꾸 카카오서버에서 만료 에러나서 확인용으로 추가했음
-
         // JSON 데이터를 OAuthToken 객체에 담음
         ObjectMapper objectMapper = new ObjectMapper();
         OAuthToken oAuthToken = null;
@@ -84,12 +90,11 @@ public class KakaoService {
             e.printStackTrace();
         }
 
-//        System.out.println(oAuthToken); //확인용
         return oAuthToken;
     }
 
-    /* 2. Access Token 으로 카카오 API 서버에서 회원 정보를 받아와 저장하고, jwt 를 생성하는 API */
-    public Account saveAccountInfo(String accessToken) {
+    /* 2. Access Token 으로 카카오 API 서버에서 회원 정보를 받아와 저장하고, jwt 를 발행해주는 메소드 */
+    public String saveAccountInfoAndGetJwt(String accessToken) {
 
         // 1) access token 으로 카카오에서 보내는 전체 JSON 을 kakaoAccountInfo 에 받아오기
         KakaoAccountInfo kakaoAccountInfo = findAccountInfo(accessToken);
@@ -114,10 +119,12 @@ public class KakaoService {
         }
 
         System.out.println(account);
-        return account;
-    }
 
+        // 4) JWT 발행
+        return createJwtToken(account);
+    }
     /* 2-1. access token 으로 JSON 응답 받아오는 메소드 */
+
     public KakaoAccountInfo findAccountInfo(String accessToken) {
 
         RestTemplate rt = new RestTemplate(); //통신용
@@ -150,4 +157,30 @@ public class KakaoService {
 
         return kakaoAccountInfo;
     }
+
+    /* 3. jwt 생성 메소드
+        jjwt 아닌 java-jwt 라이브러리를 사용하여 문법이 쫌 다를 수 있다는 점... */
+    public String createJwtToken(Account account) {
+        String jwtToken = null; // 예외처리때문에 try-catch 문 추가함
+        try {
+            jwtToken = JWT.create()
+
+                    //
+                    .withSubject(account.getEmail())
+                    .withExpiresAt(new Date(System.currentTimeMillis() + JwtProperties.EXPIRATION_TIME))
+
+                    //
+                    .withClaim("id", account.getId())
+                    .withClaim("email", account.getEmail())
+                    .withClaim("nickname", account.getNickname())
+
+                    .sign(Algorithm.HMAC512(JwtProperties.SECRET));
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        return jwtToken;
+    }
+
 }
