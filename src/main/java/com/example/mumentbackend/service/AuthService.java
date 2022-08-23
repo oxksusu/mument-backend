@@ -1,14 +1,9 @@
 package com.example.mumentbackend.service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.example.mumentbackend.config.auth.jwt.JwtProperties;
-import com.example.mumentbackend.domain.Account;
-import com.example.mumentbackend.domain.Authority;
-import com.example.mumentbackend.domain.KakaoAccountInfo;
-import com.example.mumentbackend.domain.SocialLoginType;
+import com.example.mumentbackend.config.auth.jwt.JwtProvider;
+import com.example.mumentbackend.domain.*;
 import com.example.mumentbackend.domain.repository.AccountRepository;
-import com.example.mumentbackend.domain.OAuthToken;
+import com.example.mumentbackend.domain.KakaoToken;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-
-import javax.servlet.http.HttpServletRequest;
-import java.io.UnsupportedEncodingException;
-import java.util.Date;
-import java.util.Optional;
 
 /*
 
@@ -42,9 +32,10 @@ import java.util.Optional;
  */
 @Service
 @RequiredArgsConstructor
-public class KakaoService {
+public class AuthService {
 
     private final AccountRepository accountRepository;
+    private final JwtProvider jwtProvider;
 
     /* 환경변수 가져오기 */
     @Value("${kakao.key}")
@@ -54,7 +45,7 @@ public class KakaoService {
     String KAKAO_REDIRECT_URI;
 
     /* 1. 프론트에서 1회성 코드 받아와 AccessToken 따오는 메소드 */
-    public OAuthToken getAccessToken(String code) {
+    public KakaoToken getAccessToken(String code) {
 
         System.out.println(code); //확인용
 
@@ -81,11 +72,11 @@ public class KakaoService {
                 String.class
         );
 
-        // JSON 데이터를 OAuthToken 객체에 담음
+        // JSON 데이터를 KakaoToken 객체에 담음
         ObjectMapper objectMapper = new ObjectMapper();
-        OAuthToken oAuthToken = null;
+        KakaoToken oAuthToken = null;
         try {
-            oAuthToken = objectMapper.readValue(accessTokenResponse.getBody(), OAuthToken.class);
+            oAuthToken = objectMapper.readValue(accessTokenResponse.getBody(), KakaoToken.class);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
@@ -93,39 +84,41 @@ public class KakaoService {
         return oAuthToken;
     }
 
+
     /* 2. Access Token 으로 카카오 API 서버에서 회원 정보를 받아와 저장하고, jwt 를 발행해주는 메소드 */
-    public String saveAccountInfoAndGetJwt(String accessToken) {
+    public String getLogin(String accessToken) {
 
-        // 1) access token 으로 카카오에서 보내는 전체 JSON 을 kakaoAccountInfo 에 받아오기
-        KakaoAccountInfo kakaoAccountInfo = findAccountInfo(accessToken);
+        // 1) access token 으로 카카오 서버 데이터(JSON)를 kakaoAccountInfo 에 받아오기
+        KakaoAccountInfo kakaoAccountInfo = getAccountInfo(accessToken);
 
-        // 2) getter 사용해 이메일 꺼내오기
+        // 2) 이메일 꺼내오기
         String kakaoEmail = kakaoAccountInfo.getKakao_account().getEmail();
         String nickname = kakaoAccountInfo.getKakao_account().getProfile().getNickname();
 
-        // 3) DB에 계정이 존재하지 않으면, 계정 정보를 DB에 저장함
         Account account = accountRepository.findByEmail(kakaoEmail);
-        //nullPointerException 방지용으로 Optional 깔아주려다가 빌드가 안돼서... null 예외처리 필요할듯
 
-        if (account == null) {
+        // 3) DB에 계정이 존재하지 않으면, 계정 정보를 DB에 저장함
+        // 4) refresh token 도 발급해서 넣어줌
+        if (!(accountRepository.existsByEmail(kakaoEmail))) {
             account = Account.builder()
                     .socialLoginType(SocialLoginType.KAKAO)
                     .nickname(nickname)
                     .email(kakaoEmail)
                     .authority(Authority.USER)
+                    .refreshToken(jwtProvider.createRefreshToken())
                     .build();
 
             accountRepository.save(account);
         }
 
-        System.out.println(account);
+        String jwtToken = jwtProvider.createJwtToken(account);
 
-        // 4) JWT 발행
-        return createJwtToken(account);
+        return jwtToken;
     }
-    /* 2-1. access token 으로 JSON 응답 받아오는 메소드 */
 
-    public KakaoAccountInfo findAccountInfo(String accessToken) {
+    /* 3. access token 으로 JSON 응답 받아오는 메소드 */
+
+    public KakaoAccountInfo getAccountInfo(String accessToken) {
 
         RestTemplate rt = new RestTemplate(); //통신용
 
@@ -158,29 +151,12 @@ public class KakaoService {
         return kakaoAccountInfo;
     }
 
-    /* 3. jwt 생성 메소드
-        jjwt 아닌 java-jwt 라이브러리를 사용하여 문법이 쫌 다를 수 있다는 점... */
-    public String createJwtToken(Account account) {
-        String jwtToken = null; // 예외처리때문에 try-catch 문 추가함
-        try {
-            jwtToken = JWT.create()
+    /* DB에서 리프레시 토큰 찾는 메소드 */
+    public String findRefreshToken(String kakaoToken) {
+        KakaoAccountInfo kakaoAccountInfo = getAccountInfo(kakaoToken);
+        String kakaoEmail = kakaoAccountInfo.getKakao_account().getEmail();
+        String refreshToken = accountRepository.findByEmail(kakaoEmail).getRefreshToken();
 
-                    //
-                    .withSubject(account.getEmail())
-                    .withExpiresAt(new Date(System.currentTimeMillis() + JwtProperties.EXPIRATION_TIME))
-
-                    //
-                    .withClaim("id", account.getId())
-                    .withClaim("email", account.getEmail())
-                    .withClaim("nickname", account.getNickname())
-
-                    .sign(Algorithm.HMAC512(JwtProperties.SECRET));
-
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        return jwtToken;
+        return refreshToken;
     }
-
 }

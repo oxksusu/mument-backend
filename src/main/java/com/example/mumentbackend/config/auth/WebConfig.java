@@ -15,7 +15,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins("http://localhost:3000")
                 .allowedOriginPatterns("*")
                 .allowedHeaders("*")
-                .exposedHeaders(JwtProperties.HEADER_STRING)
+                // 내가 직접 만든 귀여운 헤더 이름을 받을 수 있도록 명시해줍시다
+                .exposedHeaders(JwtProperties.HEADER_STRING_ACCESS, JwtProperties.HEADER_STRING_REFRESH)
                 .allowedMethods("*")
                 .allowCredentials(true);
     }

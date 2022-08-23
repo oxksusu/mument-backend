@@ -22,7 +22,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
 
-        String exception = (String) request.getAttribute(JwtProperties.HEADER_STRING);
+        String exception = (String) request.getAttribute(JwtProperties.HEADER_STRING_ACCESS);
         String errorCode;
 
         /* 에러 처리 - 헤더에 꼭 글자를 담아야 할까? 에러를 문서화해서 코드로 나타낼 순 없을까... */
@@ -40,6 +40,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     private void setResponse(HttpServletResponse response, String errorCode) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); //401 unauthorized 에러 발생시키기
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().println(JwtProperties.HEADER_STRING + " : " + errorCode); //에러내용 응답에 기재하기
+        response.getWriter().println(JwtProperties.HEADER_STRING_ACCESS + " : " + errorCode); //에러내용 응답에 기재하기
     }
 }

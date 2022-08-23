@@ -18,10 +18,13 @@ public class AccountService {
     인증된 사용자에 대해 정보를 가져와 Account 타입으로 반환 */
     public Account getAccountInfo(HttpServletRequest request) {
 
-        String authenticAccount = (String) request.getAttribute("authenticAccount");
-        System.out.println(authenticAccount);
+        String authenticAccount = (String) request.getAttribute("authenticAccount"); // 이메일 리턴
+        System.out.println("JWT 토큰 인증이 완료된 계정입니다 : " + authenticAccount);
 
         Account account = accountRepository.findByEmail(authenticAccount);
+        System.out.println("여기는 AccountService : " + account);
         return account;
     }
+
+
 }

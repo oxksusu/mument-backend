@@ -3,11 +3,18 @@ package com.example.mumentbackend.web;
 import com.example.mumentbackend.domain.Account;
 import com.example.mumentbackend.service.AccountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+import java.util.Optional;
 
 /*
 @sierrah
@@ -26,12 +33,22 @@ public class AccountController {
 
     private final AccountService accountService;
 
-    /* AccountController 단으로 분리하자 */
+    /* AccountController 단으로 분리해옴 */
+
+    /* 마이페이지 : 쿠키에 저장된 리프레시 토큰으로 정보를 불러옵니다. */
     @GetMapping("/account/mypage")
-    public ResponseEntity getCurrentAccounInfo(HttpServletRequest request) {
+    public ResponseEntity getCurrentAccountInfo(HttpServletRequest request, @CookieValue(value="RefreshToken") Cookie cookie) {
+
+        String refreshToken = cookie.getValue();
+        HttpHeaders headers = new HttpHeaders();
 
         Account account = accountService.getAccountInfo(request);
-        return ResponseEntity.ok().body(account);
+        return ResponseEntity.ok()
+                .body(account);
     }
+
+
+//    @GetMapping("/refresh")
+//    public
 
 }

@@ -23,7 +23,10 @@ public class Account { // 예약어가 이미 존재하므로 users로 바꾸어
     private Long id;
 
     @Column
-    private String nickname;
+    private String nickname; //카카오닉네임
+
+    @Column
+    private String accountName;
 
     @Column(nullable = false)
     private String email;
@@ -40,15 +43,19 @@ public class Account { // 예약어가 이미 존재하므로 users로 바꾸어
     @Column
     private SocialLoginType socialLoginType;
 
+    @Column
+    private String refreshToken;
 
     // 소셜 로그인 종류에 따라 분리하여 처리하기 위해서 socialLoginType 컬럼 추가했음
     @Builder
-    public Account(SocialLoginType socialLoginType, String email, String nickname, String picture, Authority authority) {
+    public Account(SocialLoginType socialLoginType, String email, String nickname, String accountName, String picture, Authority authority, String refreshToken) {
         this.socialLoginType = socialLoginType;
         this.email = email;
         this.nickname = nickname;
+        this.accountName = accountName; //사용자가 정한 별명
         this.picture = picture;
         this.authority = authority;
+        this.refreshToken = refreshToken;
     }
 
 }

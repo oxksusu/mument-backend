@@ -12,5 +12,5 @@ public class MumentBackendApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(MumentBackendApplication.class, args);
 	}
-
+	
 }

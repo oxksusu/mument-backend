@@ -1,7 +1,5 @@
 package com.example.mumentbackend.config.auth.jwt;
 
-import lombok.Value;
-
 public interface JwtProperties {
 
     /* JWT Signature 해싱용 시크릿 키 : 512비트 이상, 환경변수로 불러오고 싶은데... */
@@ -15,5 +13,7 @@ public interface JwtProperties {
     String TOKEN_PREFIX = "Bearer ";
 
     /* 헤더 Authorization 항목에 토큰을 넣어주기 위해 */
-    String HEADER_STRING = "Authorization";
+    String HEADER_STRING_ACCESS = "Authorization";
+
+    String HEADER_STRING_REFRESH = "RefreshToken";
 }
