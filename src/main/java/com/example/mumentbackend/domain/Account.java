@@ -1,10 +1,17 @@
 package com.example.mumentbackend.domain;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /*
 
@@ -12,21 +19,27 @@ import javax.persistence.*;
 
  */
 @Getter
+@Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "account")
 @Entity
-public class Account { // 예약어가 이미 존재하므로 users로 바꾸어 지정해야함
+public class Account extends BaseTimeEntity { // 예약어가 이미 존재하므로 users로 바꾸어 지정해야함
 
     @Id
-    @Column(name = "account_id")
+    @Column(name="account_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY) // db의 id 값이 자동으로 생성되도록 한 경우 꼭 붙여줘야 하는 어노테이션
     private Long id;
+
+    @Column
+    private Long socialId;
 
     @Column
     private String nickname; //카카오닉네임
 
     @Column
-    private String accountName;
+    private String accountName; //사용자별명
 
     @Column(nullable = false)
     private String email;
@@ -35,27 +48,8 @@ public class Account { // 예약어가 이미 존재하므로 users로 바꾸어
     @Column
     private String picture;
 
-    @Enumerated(EnumType.STRING)
+    /* 오버라이딩 충돌 이슈로 닫아놨음.. */
     @Column(nullable = false)
-    private Authority authority; // Authority 이 열거형이었으므로
-
-    @Enumerated(EnumType.STRING)
-    @Column
-    private SocialLoginType socialLoginType;
-
-    @Column
-    private String refreshToken;
-
-    // 소셜 로그인 종류에 따라 분리하여 처리하기 위해서 socialLoginType 컬럼 추가했음
-    @Builder
-    public Account(SocialLoginType socialLoginType, String email, String nickname, String accountName, String picture, Authority authority, String refreshToken) {
-        this.socialLoginType = socialLoginType;
-        this.email = email;
-        this.nickname = nickname;
-        this.accountName = accountName; //사용자가 정한 별명
-        this.picture = picture;
-        this.authority = authority;
-        this.refreshToken = refreshToken;
-    }
+    private String role; // Role - USER, ADMIN
 
 }

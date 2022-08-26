@@ -1,6 +1,5 @@
 package com.example.mumentbackend.config.auth;
 
-import com.example.mumentbackend.config.auth.jwt.JwtProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -16,7 +15,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOriginPatterns("*")
                 .allowedHeaders("*")
                 // 내가 직접 만든 귀여운 헤더 이름을 받을 수 있도록 명시해줍시다
-                .exposedHeaders(JwtProperties.HEADER_STRING_ACCESS, JwtProperties.HEADER_STRING_REFRESH)
+                .exposedHeaders("Authorization", "RefreshToken")
                 .allowedMethods("*")
                 .allowCredentials(true);
     }

@@ -1,4 +1,4 @@
-package com.example.mumentbackend.domain;
+package com.example.mumentbackend.web.dto.account.kakao;
 
 import lombok.*;
 
@@ -7,7 +7,7 @@ import lombok.*;
 //@AllArgsConstructor
 //@Builder
 @Data
-public class KakaoToken {
+public class KakaoTokenDto {
 
     /*
     카카오에서 보내는 access token 을 매핑하는 클래스다.

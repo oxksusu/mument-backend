@@ -1,16 +1,20 @@
 package com.example.mumentbackend.web;
 
-import com.example.mumentbackend.config.auth.jwt.JwtProperties;
 import com.example.mumentbackend.config.auth.jwt.JwtProvider;
+import com.example.mumentbackend.domain.Account;
 import com.example.mumentbackend.service.AuthService;
-import com.example.mumentbackend.domain.KakaoToken;
+import com.example.mumentbackend.service.SecurityService;
+import com.example.mumentbackend.web.dto.account.LoginResponseDto;
+import com.example.mumentbackend.web.dto.account.SignupResponseDto;
+import com.example.mumentbackend.web.dto.account.SignupRequestDto;
+import com.example.mumentbackend.web.dto.account.kakao.KakaoTokenDto;
+import com.example.mumentbackend.web.dto.token.TokenDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 /*
@@ -26,7 +30,7 @@ OAuth Kakao 인증 관련 요청을 처리하는 API 입니다.
 public class AuthController {
 
     private final AuthService authService;
-    private final JwtProvider jwtProvider;
+    private final SecurityService securityService;
 
     /*
     @sierrah
@@ -37,46 +41,49 @@ public class AuthController {
     🤔 생각해볼 것 :
         - 유저 정보를 불러오는 과정은 다른 컨트롤러 단으로 분리? (=> 해결 완료!)
         - 로그인 요청이 들어오면, JWT 를 매번 발급? (=> 해야지 임뫄..)
+        - refresh token 만료시?
     */
-    @GetMapping("/oauth/kakao")
-    public ResponseEntity kakaoSignUp(@RequestParam("code") String code) {
 
-        HttpHeaders headers = new HttpHeaders();
+    @GetMapping("/login/kakao")
+    public ResponseEntity<LoginResponseDto> kakaoLogin(HttpServletRequest request) {
 
-        /* 카카오 API 서버에서 Access Token = oAuth token 발급 */
-        KakaoToken kakaoToken = authService.getAccessToken(code);
-        String oAuthToken = kakaoToken.getAccess_token();
+        String code = request.getParameter("code");
+        System.out.println(code);
+        KakaoTokenDto kakaoTokenDto = authService.getKakaoAccessToken(code);
+        System.out.println("kakaoTokenDto: " + kakaoTokenDto);
+        String kakaoAccessToken = kakaoTokenDto.getAccess_token();
+        System.out.println("kakaoAccessToken: " + kakaoAccessToken);
 
-        /* 로그인 시도시 JWT 발급 */
-        String accessToken = authService.getLogin(oAuthToken); // access_token 이 반환됨
+        // authService.kakaologin 상에서 다 처리해야함
+        LoginResponseDto loginResponseDto = authService.kakaoLogin(kakaoAccessToken);
 
-        /* 리프레시 토큰이 DB에 존재하지 않으면 (회원 정보가 없으면) 발급함 */
-        String refreshToken = jwtProvider.createRefreshToken();
-        /* 리프레시 토큰은 http-only 쿠키로 설정해줘야 함 */
-        ResponseCookie cookie = ResponseCookie.from("RefreshToken", refreshToken)
-                .maxAge(60*60*24*7) // 쿠키 유효기간 설정
-                .path("/")
-                .secure(true)
-                .sameSite("None")
-                .httpOnly(true)
-                .build();
-
-        /* 응답 Header 에 refresh token 추가 */
-        headers.add("Set-Cookie", cookie.toString());
-
-
-        /* access token 발급 */
-        headers.add(JwtProperties.HEADER_STRING_ACCESS, JwtProperties.TOKEN_PREFIX + accessToken);
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body("회원 정보 저장과 jwt 발행이 완료되었습니다.");
+        return ResponseEntity.ok(loginResponseDto);
     }
 
-    @GetMapping("/oauth/refresh")
-    public void setRefreshToken(@CookieValue(value="RefreshToken") Cookie cookie) {
+    @PostMapping("/signup")
+    public ResponseEntity<SignupResponseDto> kakaoSignup(@RequestBody SignupRequestDto requestDto) {
 
-        String cookieValue = cookie.getValue();
-        System.out.println("쿠키 값을 읽어와봐용 : " + cookieValue); //오오오오오오
+        // requestDto 로 데이터 받아와서 accountId 반환
+        Long accountId = authService.kakaoSignUp(requestDto);
+
+        // 최초 가입자에게는 RefreshToken, AccessToken 모두 발급
+        TokenDto tokenDto = securityService.signup(accountId);
+
+        // AccessToken 은 header 에 세팅하고, refreshToken 은 httpOnly 쿠키로 세팅
+        SignupResponseDto signUpResponseDto = new SignupResponseDto();
+        HttpHeaders headers = new HttpHeaders();
+        ResponseCookie cookie = ResponseCookie.from("RefreshToken", tokenDto.getRefreshToken())
+                        .maxAge(60*60*24*7) // 쿠키 유효기간 7일로 설정했음
+                        .path("/")
+                        .secure(true)
+                        .sameSite("None")
+                        .httpOnly(true)
+                        .build();
+        headers.add("Set-Cookie", cookie.toString());
+        headers.add("Authorization", tokenDto.getAccessToken());
+
+        signUpResponseDto.setResult("가입이 완료되었습니다.");
+        return ResponseEntity.ok().headers(headers).body(signUpResponseDto);
     }
 
 }

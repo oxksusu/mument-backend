@@ -4,6 +4,7 @@ import com.example.mumentbackend.domain.Account;
 import com.example.mumentbackend.domain.SocialLoginType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 

@@ -2,6 +2,7 @@ package com.example.mumentbackend.web;
 
 import com.example.mumentbackend.domain.Account;
 import com.example.mumentbackend.service.AccountService;
+import com.example.mumentbackend.service.SecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +33,7 @@ request header 에 authorization 항목으로 토큰 정보가 들어오면
 public class AccountController {
 
     private final AccountService accountService;
+    private final SecurityService securityService;
 
     /* AccountController 단으로 분리해옴 */
 

@@ -1,4 +1,4 @@
-package com.example.mumentbackend.web.dto;
+package com.example.mumentbackend.web.dto.token;
 
 import lombok.Builder;
 import lombok.Data;

@@ -1,11 +1,11 @@
-package com.example.mumentbackend.domain;
+package com.example.mumentbackend.web.dto.account.kakao;
 
 import lombok.Data;
 
 import java.util.Properties;
 
 @Data
-public class KakaoAccountInfo {
+public class KakaoAccountDto {
 
     /*
 
