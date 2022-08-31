@@ -6,6 +6,7 @@ import lombok.Data;
 public class SignupRequestDto {
 
     public String kakaoAccessToken;
+    public String email;
     public String accountName;
     public String picture;
 }

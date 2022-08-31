@@ -6,4 +6,8 @@ import lombok.Data;
 public class SignupResponseDto {
 
     String result;
+
+    String email;
+    String accountName;
+    String picture;
 }

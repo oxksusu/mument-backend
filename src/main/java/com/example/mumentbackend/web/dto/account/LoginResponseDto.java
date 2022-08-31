@@ -8,6 +8,6 @@ public class LoginResponseDto {
 
     public boolean loginSuccess;
     public Account account;
-    public String accessToken;
     public String kakaoAccessToken;
+    public String email;
 }

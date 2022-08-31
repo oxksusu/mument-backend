@@ -15,7 +15,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOriginPatterns("*")
                 .allowedHeaders("*")
                 // 내가 직접 만든 귀여운 헤더 이름을 받을 수 있도록 명시해줍시다
-                .exposedHeaders("Authorization", "RefreshToken")
+                .exposedHeaders("Authorization", "Set-Cookie")
                 .allowedMethods("*")
                 .allowCredentials(true);
     }

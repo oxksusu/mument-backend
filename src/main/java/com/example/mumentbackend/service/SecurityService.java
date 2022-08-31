@@ -8,19 +8,13 @@ import com.example.mumentbackend.domain.Account;
 import com.example.mumentbackend.domain.RefreshToken;
 import com.example.mumentbackend.domain.repository.AccountRepository;
 import com.example.mumentbackend.domain.repository.RefreshTokenRepository;
-import com.example.mumentbackend.web.dto.account.LoginResponseDto;
+import com.example.mumentbackend.web.dto.account.RefreshResponseDto;
 import com.example.mumentbackend.web.dto.token.TokenDto;
 import com.example.mumentbackend.web.dto.token.TokenRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 
 /*
 
@@ -47,6 +41,7 @@ public class SecurityService {
         TokenDto tokenDto = jwtProvider.createTokenDto(account.getId(), "USER");
 
         // RefreshToken 만 DB에 저장
+        // signup 시에도 저장하고, 로그인시에도 저장하므로 존재하는 토큰을 찾기 위해 key 값이 필요
         RefreshToken refreshToken = RefreshToken.builder()
                 .key(account.getId())
                 .token(tokenDto.getRefreshToken())
@@ -101,5 +96,32 @@ public class SecurityService {
         tokenRepository.save(refreshToken);
 
         return newToken;
+    }
+
+    public RefreshResponseDto refresh(String email, String refreshToken) {
+        RefreshResponseDto responseDto = new RefreshResponseDto();
+        // refreshToken 만료 검사
+        if (!jwtProvider.validationToken(refreshToken)) {
+            throw new CRefreshTokenException();
+        }
+        Account account = accountRepository.findByEmail(email);
+        Long accountId = account.getId();
+
+        // refreshToken 이 DB에 있으면 access Token 재발급
+        RefreshToken savedRefreshToken = tokenRepository.findByKey(accountId)
+                .orElseThrow(CRefreshTokenException::new);
+
+        // 가져온 refreshToken 이 들어온 refreshToken 과 일치하지 않을 경우 에러 발생
+        if (!refreshToken.equals(savedRefreshToken.getToken()))
+            throw new CRefreshTokenException();
+
+        // 문제없으면 access token 만 재발행
+        TokenDto newToken = jwtProvider.createTokenDto(accountId, "USER");
+        responseDto.setAccount(account);
+        responseDto.setAccessToken(newToken.getAccessToken());
+//        refreshToken.setToken(newToken.getRefreshToken());
+//        tokenRepository.save(refreshToken); // 재발행이므로 refreshToken을 저장하지 않음
+
+        return responseDto;
     }
 }

@@ -1,20 +1,22 @@
 package com.example.mumentbackend.web;
 
-import com.example.mumentbackend.config.auth.jwt.JwtProvider;
 import com.example.mumentbackend.domain.Account;
 import com.example.mumentbackend.service.AuthService;
 import com.example.mumentbackend.service.SecurityService;
 import com.example.mumentbackend.web.dto.account.LoginResponseDto;
+import com.example.mumentbackend.web.dto.account.RefreshResponseDto;
 import com.example.mumentbackend.web.dto.account.SignupResponseDto;
 import com.example.mumentbackend.web.dto.account.SignupRequestDto;
+import com.example.mumentbackend.web.dto.account.kakao.KakaoAccountDto;
 import com.example.mumentbackend.web.dto.account.kakao.KakaoTokenDto;
 import com.example.mumentbackend.web.dto.token.TokenDto;
+import com.example.mumentbackend.web.dto.token.TokenRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 /*
@@ -54,10 +56,26 @@ public class AuthController {
         String kakaoAccessToken = kakaoTokenDto.getAccess_token();
         System.out.println("kakaoAccessToken: " + kakaoAccessToken);
 
-        // authService.kakaologin 상에서 다 처리해야함
-        LoginResponseDto loginResponseDto = authService.kakaoLogin(kakaoAccessToken);
+        LoginResponseDto loginResponseDto = new LoginResponseDto();
+        loginResponseDto.setKakaoAccessToken(kakaoAccessToken);
+        //  account 받아와야할듯??
+        KakaoAccountDto kakaoAccountDto = authService.getKakaoInfo(kakaoAccessToken);
+        Account account = authService.mapKakaoInfo(kakaoAccountDto);
+        System.out.println("매핑된 정보:" + account);
+        loginResponseDto.setAccount(account);
+        loginResponseDto.setKakaoAccessToken(kakaoAccessToken);
 
-        return ResponseEntity.ok(loginResponseDto);
+        TokenDto tokenDto = authService.kakaoLogin(kakaoAccessToken);
+        HttpHeaders headers;
+        if (tokenDto != null) {
+            loginResponseDto.setLoginSuccess(true);
+            headers = authService.setTokenHeaders(tokenDto);
+        } else {
+            headers = new HttpHeaders();
+            loginResponseDto.setLoginSuccess(false);
+        }
+
+        return ResponseEntity.ok().headers(headers).body(loginResponseDto);
     }
 
     @PostMapping("/signup")
@@ -65,25 +83,48 @@ public class AuthController {
 
         // requestDto 로 데이터 받아와서 accountId 반환
         Long accountId = authService.kakaoSignUp(requestDto);
+        Account account = authService.accountFindById(accountId);
 
         // 최초 가입자에게는 RefreshToken, AccessToken 모두 발급
         TokenDto tokenDto = securityService.signup(accountId);
 
         // AccessToken 은 header 에 세팅하고, refreshToken 은 httpOnly 쿠키로 세팅
-        SignupResponseDto signUpResponseDto = new SignupResponseDto();
-        HttpHeaders headers = new HttpHeaders();
-        ResponseCookie cookie = ResponseCookie.from("RefreshToken", tokenDto.getRefreshToken())
-                        .maxAge(60*60*24*7) // 쿠키 유효기간 7일로 설정했음
-                        .path("/")
-                        .secure(true)
-                        .sameSite("None")
-                        .httpOnly(true)
-                        .build();
-        headers.add("Set-Cookie", cookie.toString());
-        headers.add("Authorization", tokenDto.getAccessToken());
+        HttpHeaders headers = authService.setTokenHeaders(tokenDto);
 
-        signUpResponseDto.setResult("가입이 완료되었습니다.");
+        // 응답 작성
+        SignupResponseDto signUpResponseDto = new SignupResponseDto();
+        signUpResponseDto.setEmail(account.getEmail());
+        signUpResponseDto.setAccountName(account.getAccountName());
+        signUpResponseDto.setPicture(account.getPicture());
+
         return ResponseEntity.ok().headers(headers).body(signUpResponseDto);
     }
 
+    @GetMapping("/reissue")
+    public ResponseEntity reissue(HttpServletRequest request,
+                                  @CookieValue(name = "RefreshToken") Cookie cookie) {
+        String accessToken = request.getHeader("Authorization");
+        System.out.println("뽑아낸 access token: " + accessToken); //확인용
+        String refreshToken = cookie.getValue();
+        System.out.println("뽑아낸 refresh token: " + refreshToken); //확인용
+
+        TokenRequestDto tokenRequestDto = new TokenRequestDto(accessToken, refreshToken);
+        TokenDto newTokenDto = securityService.reissue(tokenRequestDto);
+
+        HttpHeaders headers = authService.setTokenHeaders(newTokenDto);
+
+        return ResponseEntity.ok().headers(headers).body("토큰 재발행이 완료되었습니당");
+    }
+
+    @GetMapping("/refresh")
+    public ResponseEntity refresh(HttpServletRequest request,
+                                  @CookieValue(name = "RefreshToken") Cookie cookie) {
+
+        String email = request.getParameter("id"); //이메일 받아오기
+        String refreshToken = cookie.getValue(); //쿠키속 refreshToken 가져오기
+        RefreshResponseDto responseDto = securityService.refresh(email, refreshToken);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", responseDto.getAccessToken());
+        return ResponseEntity.ok().headers(headers).body(responseDto.getAccount());
+    }
 }

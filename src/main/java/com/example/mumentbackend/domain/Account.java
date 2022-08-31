@@ -33,6 +33,9 @@ public class Account extends BaseTimeEntity { // 예약어가 이미 존재하�
     private Long id;
 
     @Column
+    private String loginType;
+
+    @Column
     private Long socialId;
 
     @Column
