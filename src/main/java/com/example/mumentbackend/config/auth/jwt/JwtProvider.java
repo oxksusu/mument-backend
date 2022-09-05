@@ -11,14 +11,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
+import java.util.Base64;
 import java.util.Date;
-import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -26,7 +23,8 @@ import java.util.List;
 public class JwtProvider {
 
     @Value("${jwt.secret}")
-    private String secretKey;
+    private byte[] secretKey;
+
     private String ROLES = "roles";
     private final Long accessTokenValidMillisecond = 60 * 60 * 1000L; // 1 hour
     private final Long refreshTokenValidMillisecond = 14 * 24 * 60 * 60 * 1000L; // 14 day
@@ -84,6 +82,7 @@ public class JwtProvider {
 
     // Jwt 토큰 복호화해서 가져오기
     private Claims parseClaims(String token) {
+
         try {
             return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
         } catch (ExpiredJwtException e) {
@@ -99,6 +98,7 @@ public class JwtProvider {
 
     // jwt 의 유효성 및 만료일자 확인
     public boolean validationToken(String token) {
+
         try {
             Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
             return true;

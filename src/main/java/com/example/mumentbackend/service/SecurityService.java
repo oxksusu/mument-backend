@@ -98,18 +98,20 @@ public class SecurityService {
         return newToken;
     }
 
-    public RefreshResponseDto refresh(String email, String refreshToken) {
+    public RefreshResponseDto refresh(String refreshToken) {
         RefreshResponseDto responseDto = new RefreshResponseDto();
         // refreshToken 만료 검사
         if (!jwtProvider.validationToken(refreshToken)) {
             throw new CRefreshTokenException();
         }
-        Account account = accountRepository.findByEmail(email);
-        Long accountId = account.getId();
 
         // refreshToken 이 DB에 있으면 access Token 재발급
-        RefreshToken savedRefreshToken = tokenRepository.findByKey(accountId)
-                .orElseThrow(CRefreshTokenException::new);
+        RefreshToken savedRefreshToken = tokenRepository.findByToken(refreshToken)
+                .orElseThrow(CUserNotFoundException::new);
+
+        Long accountId = savedRefreshToken.getKey();
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(CUserNotFoundException::new);
 
         // 가져온 refreshToken 이 들어온 refreshToken 과 일치하지 않을 경우 에러 발생
         if (!refreshToken.equals(savedRefreshToken.getToken()))

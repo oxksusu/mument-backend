@@ -117,12 +117,10 @@ public class AuthController {
     }
 
     @GetMapping("/refresh")
-    public ResponseEntity refresh(HttpServletRequest request,
-                                  @CookieValue(name = "RefreshToken") Cookie cookie) {
+    public ResponseEntity refresh(@CookieValue(name = "RefreshToken") Cookie cookie) {
 
-        String email = request.getParameter("id"); //이메일 받아오기
         String refreshToken = cookie.getValue(); //쿠키속 refreshToken 가져오기
-        RefreshResponseDto responseDto = securityService.refresh(email, refreshToken);
+        RefreshResponseDto responseDto = securityService.refresh(refreshToken);
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", responseDto.getAccessToken());
         return ResponseEntity.ok().headers(headers).body(responseDto.getAccount());

@@ -12,4 +12,5 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Stri
 
     /* 토큰 존재 유무 확인 */
     Optional<RefreshToken> findByKey(Long key);
+    Optional<RefreshToken> findByToken(String token);
 }
