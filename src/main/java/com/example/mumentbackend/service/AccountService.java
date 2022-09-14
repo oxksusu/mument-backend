@@ -21,7 +21,8 @@ public class AccountService {
         String authenticAccount = (String) request.getAttribute("authenticAccount"); // 이메일 리턴
         System.out.println("JWT 토큰 인증이 완료된 계정입니다 : " + authenticAccount);
 
-        Account account = accountRepository.findByEmail(authenticAccount);
+        Account account = accountRepository.findByEmail(authenticAccount)
+                .orElseThrow();
         System.out.println("여기는 AccountService : " + account);
         return account;
     }

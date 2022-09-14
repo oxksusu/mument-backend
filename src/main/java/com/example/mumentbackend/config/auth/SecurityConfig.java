@@ -50,8 +50,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests()
                 .antMatchers(HttpMethod.OPTIONS).permitAll() // 열어두어야 CORS Preflight 막을 수 있음
-                .antMatchers("/api/**").permitAll()
-                .anyRequest().permitAll()
+                .antMatchers("/", "/h2/**", "/auth/**").permitAll()
+                .anyRequest().authenticated()
 
                 // JWT 토큰 예외처리부
                 .and()
@@ -61,6 +61,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .and()
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
-
     }
 }

@@ -25,8 +25,8 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     public void commence(
             HttpServletRequest request,
             HttpServletResponse response,
-            AuthenticationException authException) throws IOException, ServletException {
+            AuthenticationException authException) throws IOException {
 
-        response.sendRedirect("/exception/entryPoint");
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED); //401 에러 발생시키기
     }
 }

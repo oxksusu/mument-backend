@@ -36,13 +36,14 @@ public class Account extends BaseTimeEntity { // 예약어가 이미 존재하�
     private String loginType;
 
     @Column
-    private Long socialId;
+    @Enumerated(EnumType.STRING)
+    private Authority authority;
 
     @Column
-    private String nickname; //카카오닉네임
+    private String kakaoName; //카카오닉네임
 
     @Column
-    private String accountName; //사용자별명
+    private String nickname; //사용자별명
 
     @Column(nullable = false)
     private String email;
@@ -50,9 +51,5 @@ public class Account extends BaseTimeEntity { // 예약어가 이미 존재하�
     /* 회원가입 과정에서는 프로필 사진을 나중에 등록할 수 있게 nullable */
     @Column
     private String picture;
-
-    /* 오버라이딩 충돌 이슈로 닫아놨음.. */
-    @Column(nullable = false)
-    private String role; // Role - USER, ADMIN
 
 }

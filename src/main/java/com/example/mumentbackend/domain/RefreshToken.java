@@ -6,8 +6,6 @@ import javax.persistence.*;
 
 @Getter
 @Setter
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "refresh_token")
 @Entity
@@ -23,4 +21,14 @@ public class RefreshToken {
     @Column(name = "token_value", nullable = false)
     private String token;
 
+    @Builder
+    public RefreshToken(Long key, String token) {
+        this.key = key;
+        this.token = token;
+    }
+
+    public RefreshToken updateToken(String token) {
+        this.token = token;
+        return this;
+    }
 }

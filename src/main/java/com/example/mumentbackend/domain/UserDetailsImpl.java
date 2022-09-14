@@ -22,7 +22,7 @@ public class UserDetailsImpl implements UserDetails {
         collection.add(new GrantedAuthority() {
             @Override
             public String getAuthority() {
-                return account.getRole();
+                return account.getAuthority().toString();
             }
         });
         return collection;
